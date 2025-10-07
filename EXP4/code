@@ -1,0 +1,54 @@
+//CIFAR-10 testing with different hyperparameters
+import tensorflow as tf
+from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Flatten, Dense
+from tensorflow.keras import initializers
+import numpy as np
+import time
+
+# Load and Preprocess Data
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+y_train, y_test = to_categorical(y_train), to_categorical(y_test)
+
+# --- Baseline Model ---
+baseline_model = Sequential([
+    Flatten(input_shape=(32, 32, 3)),
+    Dense(256, activation='relu'),
+    Dense(128, activation='relu'),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+baseline_model.compile(optimizer='adam', loss='categorical_crossentropy',
+                       metrics=['accuracy'])
+
+st = time.time()
+history = baseline_model.fit(x_train, y_train, epochs=5, batch_size=64,
+                             validation_data=(x_test, y_test))
+sp = time.time()
+print("=" * 40)
+
+test_loss, test_acc = baseline_model.evaluate(x_test, y_test)
+base_time_taken = round(sp - st, 2)
+
+print(f"Test Loss of baseline: {test_loss}")
+print(f"Test Accuracy of baseline: {test_acc * 100:.2f}")
+print(f"Time taken of baseline: {base_time_taken}")
+
+# --- Initializer Models ---
+def create_model(initializer=None):
+    model = Sequential([
+        Flatten(input_shape=(32, 32, 3)),
+        Dense(256, activation='relu', kernel_initializer=initializer),
+        Dense(128, activation='relu', kernel_initializer=initializer),
+        Dense(64, activation='relu', kernel_initializer=initializer),
+        Dense(10, activation='softmax')
+    ])
+    return model
+
+weight_initializers = ['glorot_uniform', 'he_normal']
+
+for init in weight_initializers:
