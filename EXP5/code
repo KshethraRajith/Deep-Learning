@@ -1,0 +1,44 @@
+//program to implement a convolutional neural network architecture for digit classification on the MNIST dataset
+import tensorflow as tf
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.models import Sequential
+import numpy as np
+import matplotlib.pyplot as plt
+
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+y_train, y_test = to_categorical(y_train), to_categorical(y_test)
+
+model = tf.keras.Sequential([
+    Conv2D(64, 3, activation='relu', input_shape=(28, 28, 1)),
+    MaxPooling2D(),
+    Conv2D(64, 3, activation='relu'),
+    MaxPooling2D(),
+    Conv2D(64, 3, activation='relu'),
+    Flatten(),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+history = model.fit(x_train, y_train, epochs=5, batch_size=64, validation_data=(x_test, y_test))
+
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print("accuracy =", test_acc)
+print("loss =", test_loss)
+
+class_names = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+random_indices = np.random.choice(len(x_test), 3, replace=False)
+sample_images = x_test[random_indices]
+sample_labels = y_test[random_indices]
+
+predictions = model.predict(sample_images)
+for i in range(3):
+    predicted_label = class_names[np.argmax(predictions[i])]
+    true_label = class_names[np.argmax(sample_labels[i])]
+    plt.imshow(sample_images[i])
+    plt.title(f"True: {true_label} | Predicted: {predicted_label}")
+    plt.axis('off')
+plt.show()
